@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<voicemail xmlns="http://www.innovaphone.com/xsd/voicemail6.xsd" _ver="VM-08-60053">
+===== Save Or Cancel Function =======================================================
+	<function define="SaveOrCancel">
+		<assign out="abortSave" value="false"/>
+        <event type="dtmf" block="false">
+            <pbx-getdtmfdigit out-dtmf="$dtmf" />
+            <switch var="$dtmf">
+                <case equal="2">
+                    <call name="Save"/>
+                    <assign out="abortSave" value="true"/>
+                </case>
+                <case equal="*">
+                    <assign out="abortSave" value="true"/>
+                    <store-get root="$lang" name="$cancel" out-url="$ctrl"/>
+                    <pbx-prompt url="$ctrl" barge-in="false"/>
+                </case>
+            </switch>
+        </event>
+        <while notcond="$abortSave">
+                <!--  Prompt Menueoptions -->
+            <store-get root="$lang" name="$save_2_cancel_star" out-url="$ctrl"/>
+            <pbx-prompt url="$ctrl" />
+            <if notcond="$abortSave">
+                    <!-- Silence. 4 Seconds -->
+                <store-get root="$lang" name="$silence" out-url="$ctrl" />
+                <pbx-prompt url="$ctrl" sec="4" repeat="true"/>
+            </if>
+        </while>
+	</function>
+	
+===== Save Function ================================================================
+	<function define="Save">
+        <!--<store-del root="" name="$file"/>-->
+        <store-ren root="$savedir" name="$tempsavefile" new-name="$savefile"/>
+        <store-get root="$lang" name="$message_saved" out-url="$ctrl" />
+        <pbx-prompt url="$ctrl" barge-in="false"/>
+    </function>
+
+
+===== Main Routine =================================================================
+	<function define="Main">
+	<license/>	
+	
+	<!-- Set the Filename -->
+	<if cond="$_fileName">
+		<assign out="$fileName" value="$_fileName"/>
+	</if>
+	<else>
+		<assign out="$fileName" value="RecordedMessage"/>
+	</else>
+	
+	<!-- Set the Directory where the Recorded Messages are stored -->
+	<assign out="$savedir" value="RecordedMessages"/>
+	
+	<!-- Set the Language of the prompts (default en) -->
+	<if cond="$_lang">
+		<assign out="$lang" value="$_lang"/>
+	</if>
+	<else>
+		<assign out="$lang" value="en"/>
+	</else>
+	<!-- Set the filenames of the promts -->
+	<lib-strcat string="$lang" string2="_" out-string="$langprefix"/>
+	
+	<!-- The menu-file is the xx_menu_voicebox_greetings_personal.g711a file -->
+	
+	<lib-strcat string="" string2="beep.g711a" out-string="$beep"/>
+	<lib-strcat string="$langprefix" string2="cancel.g711a" out-string="$cancel"/>
+	<lib-strcat string="$langprefix" string2="menu_voicebox_greetings_personal.g711a" out-string="$menu"/>  
+	<lib-strcat string="$langprefix" string2="message_deleted.g711a" out-string="$message_deleted"/>
+	<lib-strcat string="$langprefix" string2="message_saved.g711a" out-string="$message_saved"/>
+	<lib-strcat string="$langprefix" string2="not_available.g711a" out-string="$not_available"/>
+	<lib-strcat string="$langprefix" string2="please_speak_after_the_signal.g711a" out-string="$speak_after_the_signal"/>
+	<lib-strcat string="$langprefix" string2="press_key_to_end.g711a" out-string="$press_key_to_end"/>
+	<lib-strcat string="$langprefix" string2="save_2_cancel_star.g711a" out-string="$save_2_cancel_star"/>
+	<lib-strcat string="$langprefix" string2="your_input_is.g711a" out-string="$your_input_is"/>
+		
+	<lib-strcat string="" string2="silence.g711a" out-string="$silence"/>	
+	
+	<lib-strcat string="$fileName" string2="." out-string="$savefile"/>
+	<lib-strcat string="$savefile" string2="g711a" out-string="$savefile"/>
+	<lib-strcat string="temp_" string2="$savefile" out-string="$tempsavefile"/>
+	
+	<event type="dtmf" block="false">
+			<event type="dtmf" block="false">
+            </event>
+            <pbx-getdtmfdigit out-dtmf="$dtmf" />
+            <switch var="$dtmf">
+                <case equal="1">
+					<store-get root="$lang" name="$speak_after_the_signal" out-url="$ctrl" />
+                    <pbx-prompt url="$ctrl" barge-in="false"/>
+					
+                    <store-get root="$lang" name="$press_key_to_end" out-url="$ctrl" />
+                    <pbx-prompt url="$ctrl" barge-in="false"/>
+
+                    <store-get root="$lang" name="$silence" out-url="$ctrl" />
+                    <pbx-prompt url="$ctrl" sec="1" barge-in="false"/>
+
+                    <store-get root="$lang" name="$beep" out-url="$ctrl" />
+                    <pbx-prompt url="$ctrl" />
+					
+					<store-get root="$savedir" name="$tempsavefile" out-url="$file"/>
+					<pbx-record url="$file"/>
+					
+					<store-get root="lang" name="$your_input_is" out-url="$ctrl" />
+                    <pbx-prompt url="$ctrl" barge-in="false"/>
+					
+					<pbx-prompt url="$file"/>
+					
+					<call name="SaveOrCancel"/>
+					
+                </case>
+                <case equal="2">
+                    <store-get root="$savedir" name="$savefile" out-url="$file"/>
+                    <store-getstat root="$savedir" name="$savefile" out-error="$error"/>
+                    <if cond="$error">
+                        <store-get root="$lang" name="$not_available" out-url="$ctrl" />
+                        <pbx-prompt url="$ctrl" barge-in="false"/>
+                    </if>
+                    <else>
+						<store-get root="$savedir" name="$savefile" out-url="$ctrl" />
+                        <pbx-prompt url="$ctrl"/>
+                    </else>
+                </case>
+				<case equal="3">
+					<store-getstat root="$savedir" name="$savefile" out-error="$error"/>
+                    <if cond="$error">
+                        <store-get root="$lang" name="$not_available" out-url="$ctrl" />
+                        <pbx-prompt url="$ctrl" barge-in="false"/>
+                    </if>
+					<else>					
+						<store-del root="$savedir" name="$savefile"/>
+						<store-get root="$lang" name="$message_deleted" out-url="$ctrl"/>
+						<pbx-prompt url="$ctrl" />
+					</else>
+                </case>
+            </switch>
+        </event>	
+		
+		<while cond="true">
+            <!--  Prompt Menueoptions -->
+            <store-get root="$lang" name="$menu" out-url="$menu"/>
+			<pbx-prompt url="$menu" />
+			
+			<store-get root="$lang" name="$silence" out-url="$ctrl" />
+            <pbx-prompt url="$ctrl" sec="4" repeat="true"/>
+        </while>
+
+	</function>
+</voicemail>
+
+<!-- Record an announcement by phone wiki-src/xml/phoneRec 1,0,10,0 (C) innovaphone AG 2010-2020 -->
