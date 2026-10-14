@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<voicemail xmlns="http://www.innovaphone.com/xsd/voicemail6.xsd" _ver="VM-08-60053">
+<voicemail xmlns="https://www.innovaphone.com/xsd/voicemail6.xsd" _ver="VM-08-60053">
 ===== Save Or Cancel Function =======================================================
 	<function define="SaveOrCancel">
 		<assign out="abortSave" value="false"/>
